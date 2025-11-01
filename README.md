@@ -117,9 +117,10 @@ python review.py --manage
 
 ### GUI Features
 
-The issue management interface provides:
+The issue management interface provides a clean, English-language interface:
 
-- **Issue Viewer**: Table showing all detected issues with file, status, and description
+- **Review History Title**: Clearly labeled section showing "Review history"
+- **Issue Viewer**: Table with columns: ID, Status, File, and Issue description
 - **Comments**: Add and view comments on each issue with author tracking
 - **Status Management**: Mark issues as `Open`, `Resolved`, or `Wontfix`
 - **Real-Time Updates**: Auto-loads new issues from the database

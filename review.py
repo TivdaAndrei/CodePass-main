@@ -228,8 +228,8 @@ def main():
         if not sys.stdin.isatty():
             code_to_review = sys.stdin.read()
             if not code_to_review.strip():
-                console.print("[red]Error: No code provided to analyze from stdin.[/red]")
-                sys.exit(1)
+                console.print("[yellow][SKIP] No Python code to review in staged diff.[/yellow]")
+                sys.exit(0)
 
             console.print("\n[bold yellow][ANALYZE] Analyzing standard input (stdin)[/bold yellow]")
             console.print("[cyan][STREAMING] Live code review starting...[/cyan]\n")

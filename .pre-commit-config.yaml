@@ -6,5 +6,4 @@ repos:
         entry: python review.py --no-emoji
         language: system
         types: [python]
-        stages: [commit]
         pass_filenames: false

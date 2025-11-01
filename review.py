@@ -169,7 +169,7 @@ def launch_gui():
     cursor = conn.cursor()
 
     root = tk.Tk()
-    root.title("CodePass - Manager Revizuiri")
+    root.title("CodePass - Review Manager")
     root.geometry("1200x700")
 
     main_frame = ttk.Frame(root, padding="10")
@@ -180,15 +180,15 @@ def launch_gui():
     title_label.pack(pady=(0, 10))
 
     # Configurare Treeview (tabel) pentru a afișa problemele
-    cols = ("ID", "Status", "Fișier", "Problemă")
+    cols = ("ID", "Status", "File", "Issue")
     tree = ttk.Treeview(main_frame, columns=cols, show="headings", height=15)
     
     for col in cols:
         tree.heading(col, text=col)
     tree.column("ID", width=50, stretch=False)
     tree.column("Status", width=100, stretch=False)
-    tree.column("Fișier", width=200)
-    tree.column("Problemă", width=600)
+    tree.column("File", width=200)
+    tree.column("Issue", width=600)
 
     tree.pack(fill="both", expand=True, side="top")
 
@@ -210,7 +210,7 @@ def launch_gui():
     def get_selected_issue_id():
         selected = tree.focus()
         if not selected:
-            messagebox.showwarning("Nicio selecție", "Te rog selectează o problemă din listă.")
+            messagebox.showwarning("No Selection", "Please select an issue from the list.")
             return None
         return tree.item(selected, "values")[0]
 
@@ -228,7 +228,7 @@ def launch_gui():
 
         # Creează o fereastră Toplevel (fereastră nouă)
         win = Toplevel(root)
-        win.title(f"Comentarii pentru Problema #{issue_id}")
+        win.title(f"Comments for Issue #{issue_id}")
         win.geometry("600x500")
 
         # Afișează comentariile existente
@@ -248,7 +248,7 @@ def launch_gui():
         new_comment_entry.pack(fill="x", padx=10, pady="0 5")
 
         def add_comment():
-            author = simpledialog.askstring("Autor", "Introdu numele tău:", parent=win)
+            author = simpledialog.askstring("Author", "Enter your name:", parent=win)
             comment = new_comment_entry.get()
             if author and comment:
                 cursor.execute("INSERT INTO comments (issue_id, author, comment_text) VALUES (?, ?, ?)",
@@ -257,9 +257,9 @@ def launch_gui():
                 new_comment_entry.delete(0, "end")
                 load_comments()
             elif not author:
-                messagebox.showwarning("Autor lipsă", "Numele autorului este obligatoriu.", parent=win)
+                messagebox.showwarning("Missing Author", "Author name is required.", parent=win)
             
-        add_btn = ttk.Button(win, text="Adaugă Comentariu", command=add_comment)
+        add_btn = ttk.Button(win, text="Add Comment", command=add_comment)
         add_btn.pack(pady=5)
         
         load_comments()
@@ -267,10 +267,10 @@ def launch_gui():
         win.grab_set()
         root.wait_window(win)
 
-    ttk.Button(btn_frame, text="Vezi/Adaugă Comentarii", command=view_comments).pack(side="left", padx=5)
-    ttk.Button(btn_frame, text="Marchează 'Rezolvat'", command=lambda: update_status("resolved")).pack(side="left", padx=5)
-    ttk.Button(btn_frame, text="Marchează 'Wontfix'", command=lambda: update_status("wontfix")).pack(side="left", padx=5)
-    ttk.Button(btn_frame, text="Reîncarcă", command=load_issues).pack(side="right", padx=5)
+    ttk.Button(btn_frame, text="View/Add Comments", command=view_comments).pack(side="left", padx=5)
+    ttk.Button(btn_frame, text="Mark Resolved", command=lambda: update_status("resolved")).pack(side="left", padx=5)
+    ttk.Button(btn_frame, text="Mark Wontfix", command=lambda: update_status("wontfix")).pack(side="left", padx=5)
+    ttk.Button(btn_frame, text="Reload", command=load_issues).pack(side="right", padx=5)
 
     # Încarcă datele la pornire
     load_issues()

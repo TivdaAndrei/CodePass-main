@@ -60,7 +60,7 @@ Begin analysis on the following code snippet:
     
     received_data = False
     try:
-        with requests.post(OLLAMA_URL, json=data, stream=True, timeout=60) as response:
+        with requests.post(OLLAMA_URL, json=data, stream=True, timeout=180) as response:
             response.raise_for_status()
             for line in response.iter_lines():
                 if line:
@@ -81,8 +81,8 @@ Begin analysis on the following code snippet:
             yield "3. If not, pull it: `ollama pull gemma:2b`\n"
 
     except requests.exceptions.Timeout:
-        yield "\n[bold red]❌ Error: Ollama request timed out (60s).[/bold red]\n"
-        yield "[yellow]The model may still be processing. Try again.[/yellow]\n"
+        yield "\n[bold red]❌ Error: Ollama request timed out (180s).[/bold red]\n"
+        yield "[yellow]The model may still be processing. Try again or check Ollama logs.[/yellow]\n"
     except requests.exceptions.ConnectionError:
         yield "\n[bold red]❌ Error: Cannot connect to Ollama at localhost:11434[/bold red]\n"
         yield "[yellow]💡 Make sure Ollama is running:[/yellow]\n"

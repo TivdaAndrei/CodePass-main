@@ -1,0 +1,9 @@
+repos:
+-   repo: local
+    hooks:
+    -   id: ai-code-review
+        name: AI Code Review (Local)
+        entry: python review.py
+        language: system
+        types: [python]
+    pass_filenames: true

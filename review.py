@@ -175,6 +175,10 @@ def launch_gui():
     main_frame = ttk.Frame(root, padding="10")
     main_frame.pack(fill="both", expand=True)
 
+    # Title label
+    title_label = ttk.Label(main_frame, text="Review history", font=("Arial", 14, "bold"))
+    title_label.pack(pady=(0, 10))
+
     # Configurare Treeview (tabel) pentru a afișa problemele
     cols = ("ID", "Status", "Fișier", "Problemă")
     tree = ttk.Treeview(main_frame, columns=cols, show="headings", height=15)

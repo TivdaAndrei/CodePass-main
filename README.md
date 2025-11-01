@@ -16,6 +16,8 @@ A powerful command-line tool that uses local AI (via Ollama) to provide intellig
 - **🔗 Git Integration**: Automatic pre-commit hook for seamless code review workflow
 - **💻 Cross-Platform**: Windows, macOS, and Linux support
 - **🎨 Rich Terminal Output**: Beautiful formatted reviews with Markdown support
+- **🗄️ Issue Database**: SQLite database automatically tracks all issues from reviews
+- **🖥️ Issue Management GUI**: Tkinter interface to view, comment, and manage issues
 
 ## 📊 Analysis Dimensions
 
@@ -108,7 +110,26 @@ python review.py myfile.py --verbose
 python review.py myfile.py --no-emoji
 ```
 
-### Pre-Commit Hook Integration
+**Launch issue management GUI:**
+```bash
+python review.py --manage
+```
+
+### GUI Features
+
+The issue management interface provides:
+
+- **Issue Viewer**: Table showing all detected issues with file, status, and description
+- **Comments**: Add and view comments on each issue with author tracking
+- **Status Management**: Mark issues as `Open`, `Resolved`, or `Wontfix`
+- **Real-Time Updates**: Auto-loads new issues from the database
+- **Easy Navigation**: Click issues to view details and manage comments
+
+**Workflow:**
+1. Run code review: `python review.py myfile.py`
+2. Issues automatically saved to database
+3. Open GUI: `python review.py --manage`
+4. Review issues, add comments, and track progress
 
 Once installed, the hook automatically runs on every commit:
 
@@ -218,8 +239,9 @@ python review.py myfile.py --rules rules.txt
 
 ```
 CodePass-main/
-├── review.py                 # Main review script
+├── review.py                 # Main review script with CLI & GUI
 ├── .pre-commit-config.yaml   # Pre-commit hook configuration
+├── reviews.db               # SQLite database (auto-created)
 ├── requirements.txt          # Python dependencies
 ├── README.md                 # This file
 └── test_mic.py              # Example/test file
@@ -231,7 +253,9 @@ CodePass-main/
 2. **AI Analysis**: Sends code to local Ollama model with detailed prompt
 3. **Live Streaming**: Displays results in real-time as they're generated
 4. **Formatted Output**: Presents analysis as readable Markdown
-5. **Pre-Commit Integration**: Automatically runs on staged commits
+5. **Database Storage**: Automatically extracts and saves issues to SQLite
+6. **GUI Management**: View and manage all issues through the GUI
+7. **Pre-Commit Integration**: Automatically runs on staged commits
 
 ## 🐛 Troubleshooting
 

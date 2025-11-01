@@ -126,28 +126,97 @@ def parse_and_save_review(file_path, full_review_text):
     conn = sqlite3.connect('reviews.db')
     cursor = conn.cursor()
     
-    # Găsește toate problemele folosind formatul promptului
-    issues = re.split(r'\*\*\[Issue\]:\*\*', full_review_text)[1:]
+    issues_found = []
     
-    if not issues:
-        return  # Nu s-au găsit probleme formatate
-
-    for issue_text in issues:
+    # Strategie: Extragere bazată pe separatoare Markdown
+    # Caută secțiuni care descriu probleme
+    # Pattern: "## Description:", "## Bugs?:", "**Bug?**", etc.
+    
+    # Split pe secțiunile de probleme
+    sections = re.split(r'(?:^|\n)#{1,4}\s+(?:Bug|Issue|Problem|Description)', full_review_text, flags=re.MULTILINE | re.IGNORECASE)
+    
+    for section in sections[1:]:  # Skip first empty section before first match
+        lines = section.strip().split('\n')
+        if not lines:
+            continue
+        
+        # Extrage descrierea din primele linii
+        desc = ""
+        explanation = ""
+        
+        for i, line in enumerate(lines):
+            line_stripped = line.strip()
+            
+            # Extrage descrierea din liniile care nu sunt headers
+            if not line_stripped.startswith('#') and not line_stripped.startswith('**'):
+                if len(desc) < 100:
+                    desc += (" " + line_stripped).strip()
+            
+            # Extrage explanation
+            if 'explanation' in line_stripped.lower() and ':' in line_stripped:
+                idx = line_stripped.lower().find(':')
+                if idx != -1:
+                    explanation = line_stripped[idx+1:].strip()
+        
+        # Curăță descrierea
+        desc = desc.replace('##', '').replace('**', '').strip()
+        # Ia doar prima propoziție și max 120 caractere
+        if desc:
+            if '.' in desc:
+                desc = desc.split('.')[0] + '.'
+            desc = desc[:120]
+        
+        if desc and len(desc) > 10:
+            suggestion = explanation if explanation else "Review and fix this issue"
+            issues_found.append({
+                'desc': desc,
+                'suggestion': suggestion[:200],
+                'effort': 'Medium'
+            })
+    
+    # Fallback: dacă nu s-au găsit probleme, caută * **Description:**
+    if not issues_found:
+        lines = full_review_text.split('\n')
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+            if '**Description:**' in line and line.startswith('*'):
+                parts = line.split('**Description:**', 1)
+                if len(parts) > 1:
+                    desc = parts[1].strip()
+                    if len(desc) < 10 and i + 1 < len(lines):
+                        desc += " " + lines[i + 1].strip()
+                        i += 1
+                    
+                    if desc and len(desc) > 5:
+                        desc = desc[:150]
+                        
+                        suggestion = "Review this code issue"
+                        for j in range(i + 1, min(i + 10, len(lines))):
+                            if '**Explanation:**' in lines[j]:
+                                parts = lines[j].split('**Explanation:**', 1)
+                                if len(parts) > 1:
+                                    suggestion = parts[1].strip()[:200]
+                                break
+                        
+                        issues_found.append({
+                            'desc': desc,
+                            'suggestion': suggestion,
+                            'effort': 'Medium'
+                        })
+            i += 1
+    
+    # Salvează problemele în DB, evitând duplicate
+    for issue in issues_found:
         try:
-            # Extrage câmpurile individuale
-            desc = issue_text.split('\n')[0].strip()
-            suggestion_match = re.search(r'\*\*\[Suggested Fix.*?\*\*:(.*?)(?:\n\*\*\[|$)', issue_text, re.DOTALL)
-            effort_match = re.search(r'\*\*\[Remediation Effort\]:\*\*(.*?)\n', issue_text)
-            
-            suggestion = suggestion_match.group(1).strip() if suggestion_match else "N/A"
-            effort = effort_match.group(1).strip() if effort_match else "N/A"
-            
-            # Inserează doar dacă nu există deja o problemă identică și deschisă
-            cursor.execute("SELECT id FROM issues WHERE file_path = ? AND issue_desc = ? AND status = 'open'", (file_path, desc))
+            cursor.execute(
+                "SELECT id FROM issues WHERE file_path = ? AND issue_desc = ? AND status = 'open'",
+                (file_path, issue['desc'])
+            )
             if not cursor.fetchone():
                 cursor.execute(
                     "INSERT INTO issues (file_path, issue_desc, suggestion, effort, status) VALUES (?, ?, ?, ?, 'open')",
-                    (file_path, desc, suggestion, effort)
+                    (file_path, issue['desc'], issue['suggestion'], issue['effort'])
                 )
         except Exception as e:
             pass

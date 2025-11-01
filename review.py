@@ -4,6 +4,8 @@ import requests
 import json
 import os
 import glob
+import sqlite3
+import re
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.live import Live
@@ -90,6 +92,193 @@ Begin analysis on the following code snippet:
     except requests.exceptions.RequestException as e:
         yield f"\n[bold red]❌ Ollama request failed: {e}[/bold red]\n"
 
+def init_db():
+    """Creează tabelele bazei de date dacă nu există."""
+    conn = sqlite3.connect('reviews.db')
+    cursor = conn.cursor()
+    
+    # Tabelul pentru problemele identificate
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS issues (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        file_path TEXT NOT NULL,
+        issue_desc TEXT NOT NULL,
+        suggestion TEXT,
+        effort TEXT,
+        status TEXT NOT NULL DEFAULT 'open'
+    )''')
+    
+    # Tabelul pentru comentarii și răspunsuri
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS comments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        issue_id INTEGER,
+        author TEXT NOT NULL,
+        comment_text TEXT NOT NULL,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(issue_id) REFERENCES issues(id)
+    )''')
+    conn.commit()
+    conn.close()
+
+def parse_and_save_review(file_path, full_review_text):
+    """Parsează textul Markdown și salvează problemele individuale în DB."""
+    conn = sqlite3.connect('reviews.db')
+    cursor = conn.cursor()
+    
+    # Găsește toate problemele folosind formatul promptului
+    issues = re.split(r'\*\*\[Issue\]:\*\*', full_review_text)[1:]
+    
+    if not issues:
+        return  # Nu s-au găsit probleme formatate
+
+    for issue_text in issues:
+        try:
+            # Extrage câmpurile individuale
+            desc = issue_text.split('\n')[0].strip()
+            suggestion_match = re.search(r'\*\*\[Suggested Fix.*?\*\*:(.*?)(?:\n\*\*\[|$)', issue_text, re.DOTALL)
+            effort_match = re.search(r'\*\*\[Remediation Effort\]:\*\*(.*?)\n', issue_text)
+            
+            suggestion = suggestion_match.group(1).strip() if suggestion_match else "N/A"
+            effort = effort_match.group(1).strip() if effort_match else "N/A"
+            
+            # Inserează doar dacă nu există deja o problemă identică și deschisă
+            cursor.execute("SELECT id FROM issues WHERE file_path = ? AND issue_desc = ? AND status = 'open'", (file_path, desc))
+            if not cursor.fetchone():
+                cursor.execute(
+                    "INSERT INTO issues (file_path, issue_desc, suggestion, effort, status) VALUES (?, ?, ?, ?, 'open')",
+                    (file_path, desc, suggestion, effort)
+                )
+        except Exception as e:
+            pass
+                
+    conn.commit()
+    conn.close()
+
+def launch_gui():
+    """Lanșează interfața grafică Tkinter pentru managementul problemelor."""
+    
+    try:
+        import tkinter as tk
+        from tkinter import ttk, messagebox, simpledialog, Toplevel, Text, Scrollbar
+    except ImportError:
+        print("[ERROR] Tkinter is not available. GUI mode cannot run.")
+        return
+
+    conn = sqlite3.connect('reviews.db')
+    cursor = conn.cursor()
+
+    root = tk.Tk()
+    root.title("CodePass - Manager Revizuiri")
+    root.geometry("1200x700")
+
+    main_frame = ttk.Frame(root, padding="10")
+    main_frame.pack(fill="both", expand=True)
+
+    # Configurare Treeview (tabel) pentru a afișa problemele
+    cols = ("ID", "Status", "Fișier", "Problemă")
+    tree = ttk.Treeview(main_frame, columns=cols, show="headings", height=15)
+    
+    for col in cols:
+        tree.heading(col, text=col)
+    tree.column("ID", width=50, stretch=False)
+    tree.column("Status", width=100, stretch=False)
+    tree.column("Fișier", width=200)
+    tree.column("Problemă", width=600)
+
+    tree.pack(fill="both", expand=True, side="top")
+
+    # Funcție pentru a încărca/reîncărca datele
+    def load_issues():
+        # Șterge datele vechi
+        for i in tree.get_children():
+            tree.delete(i)
+        
+        # Încarcă datele noi din DB
+        cursor.execute("SELECT id, status, file_path, issue_desc FROM issues ORDER BY status, file_path")
+        for row in cursor.fetchall():
+            tree.insert("", "end", values=row)
+
+    # Butoane de acțiuni
+    btn_frame = ttk.Frame(main_frame, padding="10 0")
+    btn_frame.pack(fill="x", side="bottom")
+
+    def get_selected_issue_id():
+        selected = tree.focus()
+        if not selected:
+            messagebox.showwarning("Nicio selecție", "Te rog selectează o problemă din listă.")
+            return None
+        return tree.item(selected, "values")[0]
+
+    def update_status(status):
+        issue_id = get_selected_issue_id()
+        if issue_id:
+            cursor.execute("UPDATE issues SET status = ? WHERE id = ?", (status, issue_id))
+            conn.commit()
+            load_issues()
+
+    def view_comments():
+        issue_id = get_selected_issue_id()
+        if not issue_id:
+            return
+
+        # Creează o fereastră Toplevel (fereastră nouă)
+        win = Toplevel(root)
+        win.title(f"Comentarii pentru Problema #{issue_id}")
+        win.geometry("600x500")
+
+        # Afișează comentariile existente
+        comments_text = Text(win, height=15, wrap="word", state="disabled")
+        comments_text.pack(fill="both", expand=True, padx=10, pady=10)
+
+        def load_comments():
+            comments_text.config(state="normal")
+            comments_text.delete("1.0", "end")
+            cursor.execute("SELECT author, timestamp, comment_text FROM comments WHERE issue_id = ? ORDER BY timestamp", (issue_id,))
+            for author, ts, text in cursor.fetchall():
+                comments_text.insert("end", f"--- {author} ({ts}) ---\n{text}\n\n")
+            comments_text.config(state="disabled")
+
+        # Câmp pentru adăugare comentariu nou
+        new_comment_entry = ttk.Entry(win, width=80)
+        new_comment_entry.pack(fill="x", padx=10, pady="0 5")
+
+        def add_comment():
+            author = simpledialog.askstring("Autor", "Introdu numele tău:", parent=win)
+            comment = new_comment_entry.get()
+            if author and comment:
+                cursor.execute("INSERT INTO comments (issue_id, author, comment_text) VALUES (?, ?, ?)",
+                               (issue_id, author, comment))
+                conn.commit()
+                new_comment_entry.delete(0, "end")
+                load_comments()
+            elif not author:
+                messagebox.showwarning("Autor lipsă", "Numele autorului este obligatoriu.", parent=win)
+            
+        add_btn = ttk.Button(win, text="Adaugă Comentariu", command=add_comment)
+        add_btn.pack(pady=5)
+        
+        load_comments()
+        win.transient(root)
+        win.grab_set()
+        root.wait_window(win)
+
+    ttk.Button(btn_frame, text="Vezi/Adaugă Comentarii", command=view_comments).pack(side="left", padx=5)
+    ttk.Button(btn_frame, text="Marchează 'Rezolvat'", command=lambda: update_status("resolved")).pack(side="left", padx=5)
+    ttk.Button(btn_frame, text="Marchează 'Wontfix'", command=lambda: update_status("wontfix")).pack(side="left", padx=5)
+    ttk.Button(btn_frame, text="Reîncarcă", command=load_issues).pack(side="right", padx=5)
+
+    # Încarcă datele la pornire
+    load_issues()
+    
+    # Asigură-te că se închide conexiunea DB la ieșire
+    def on_closing():
+        conn.close()
+        root.destroy()
+
+    root.protocol("WM_DELETE_WINDOW", on_closing)
+    root.mainloop()
+
 def main():
     """
     Reads code from a file, stdin, or a directory and sends it to Ollama for review.
@@ -116,8 +305,24 @@ def main():
         action='store_true',
         help="Disable emoji output (useful for pre-commit hooks)"
     )
+    parser.add_argument(
+        '--manage',
+        action='store_true',
+        help="Open the GUI to manage issues and reviews"
+    )
     
     args = parser.parse_args()
+    
+    # Initialize database at startup
+    init_db()
+    
+    # Launch GUI if --manage flag is used
+    if args.manage:
+        try:
+            launch_gui()
+        except Exception as e:
+            console.print(f"[bold red]Error launching GUI: {e}[/bold red]")
+        sys.exit()
     
     # Convert "." or "./" to --directory if passed as a file argument
     if args.files and len(args.files) == 1 and args.files[0] in ('.', './'):
@@ -189,6 +394,7 @@ def main():
                 console.print(f"\n[cyan]DEBUG: Received {chunk_count} chunks[/cyan]")
             
             console.print("[green][OK] Review complete[/green]")
+            parse_and_save_review(filepath, full_text)
     
     # ELSE LOGIC (Existing functionality)
     else:
@@ -236,6 +442,7 @@ def main():
                                     console.print(f"\n[cyan]DEBUG: Received {chunk_count} chunks[/cyan]")
                         
                         console.print("[green][OK] Review complete[/green]")
+                        parse_and_save_review(file_path, full_text)
                 except Exception as e:
                     console.print(f"[red][ERROR] Error processing file {file_path}: {e}[/red]")
             return
@@ -277,6 +484,7 @@ def main():
                     console.print(f"\n[cyan]DEBUG: Received {chunk_count} chunks[/cyan]")
             
             console.print("\n[green][OK] Review complete[/green]")
+            parse_and_save_review("stdin", full_text)
         else:
             parser.print_help()
 

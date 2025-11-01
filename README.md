@@ -78,6 +78,11 @@ python review.py myfile.py
 python review.py file1.py file2.py file3.py
 ```
 
+**Review current directory (shortcut):**
+```bash
+python review.py .
+```
+
 **Review an entire directory:**
 ```bash
 python review.py --directory ./src
@@ -245,13 +250,13 @@ ollama list                    # See available models
 ollama pull gemma:2b          # Install a model
 ```
 
-### Issue: Pre-commit hook not running
+### Issue: "Ollama request timed out"
 
-**Solution**: Reinstall the hooks:
-```bash
-pre-commit install --install-hooks
-pre-commit run --all-files
-```
+**Solution**: The default timeout is 180 seconds. If you're still getting timeouts:
+1. Check if Ollama is running: `ollama serve`
+2. Check if the model is loaded: `ollama list`
+3. Consider waiting longer - first runs may take time to load the model
+4. If recurring, your system might be resource-constrained
 
 ### Issue: Unicode encoding errors on Windows
 
@@ -263,8 +268,9 @@ python review.py myfile.py --no-emoji
 ## 📈 Performance
 
 - **Single file review**: ~5-15 seconds (depends on file size and model)
-- **Pre-commit review**: <10 seconds for typical diffs
-- **Directory review**: Parallelized, ~30 seconds for 10-20 files
+- **Pre-commit review**: <10 seconds for typical diffs (only reviews changed lines)
+- **Directory review**: ~30 seconds for 10-20 files (reviews each file sequentially)
+- **Request timeout**: 180 seconds (allows for slower model initialization)
 
 ## 🤝 Contributing
 

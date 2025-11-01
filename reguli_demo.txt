@@ -1,0 +1,197 @@
+# CodePass - AI-Powered Code Review Rules
+# Based on Hackathon Challenge Requirements
+
+## 1. CODE QUALITY & STANDARDS
+
+### PEP 8 Compliance
+- All Python code must follow PEP 8 style guidelines
+- Maximum line length: 100 characters
+- Use 4 spaces for indentation (not tabs)
+- Function names should be lowercase_with_underscores
+- Class names should be CamelCase
+- Constants should be UPPERCASE_WITH_UNDERSCORES
+
+### Type Hints & Documentation
+- All functions must have type hints for parameters and return values
+- All functions must have docstrings explaining purpose, parameters, and return values
+- Docstrings should follow Google or NumPy style
+- Classes must document their purpose and main methods
+
+## 2. SECURITY & BEST PRACTICES
+
+### Input Validation
+- Never trust user input - always validate and sanitize
+- Use type checking and bounds checking for all inputs
+- Implement proper error handling with try-except blocks
+- Validate database queries to prevent SQL injection
+- Never hardcode sensitive information (passwords, API keys, tokens)
+
+### Error Handling
+- Catch specific exceptions, not bare except clauses
+- Provide meaningful error messages to users
+- Log errors with context for debugging
+- Use custom exceptions for application-specific errors
+- Always clean up resources in finally blocks or context managers
+
+### Security Best Practices
+- Use context managers (with statements) for file and resource handling
+- Implement proper authentication and authorization checks
+- Validate file paths to prevent directory traversal attacks
+- Use secure defaults for API endpoints and configurations
+- Regular security audits and dependency updates
+
+## 3. ARCHITECTURE & DESIGN PATTERNS
+
+### Code Organization
+- Keep functions focused and single-responsibility (SRP)
+- Extract reusable functionality into helper functions
+- Avoid code duplication - use DRY principle
+- Organize related functionality into modules and classes
+- Use composition over inheritance when possible
+
+### Performance & Efficiency
+- Avoid unnecessary loops and nested iterations
+- Cache expensive computations when appropriate
+- Use appropriate data structures (dict for lookups, lists for sequences)
+- Implement streaming/generators for large datasets
+- Profile code before optimizing
+
+### Database Design
+- Use proper indexing on frequently queried columns
+- Normalize database schema to avoid redundancy
+- Use transactions for related operations
+- Implement connection pooling for concurrent access
+- Use parameterized queries to prevent SQL injection
+
+## 4. TESTING & RELIABILITY
+
+### Code Testing
+- Write unit tests for critical functions
+- Aim for at least 80% code coverage
+- Test edge cases and error conditions
+- Use descriptive test names that explain what is being tested
+- Implement integration tests for component interactions
+
+### Logging & Monitoring
+- Add meaningful debug and error logging
+- Log important events and state changes
+- Avoid logging sensitive information
+- Use appropriate log levels (DEBUG, INFO, WARNING, ERROR)
+- Make logs queryable and actionable
+
+## 5. DOCUMENTATION & MAINTAINABILITY
+
+### Code Comments
+- Use comments to explain WHY, not WHAT (code shows what)
+- Keep comments up-to-date with code changes
+- Avoid outdated or redundant comments
+- Use comments for complex algorithms and non-obvious logic
+- Document any workarounds or temporary solutions
+
+### API & Module Documentation
+- Document public APIs with clear examples
+- Provide README with setup and usage instructions
+- Document configuration options and environment variables
+- Include example code snippets for common use cases
+- Maintain a CHANGELOG for version history
+
+## 6. PERFORMANCE OPTIMIZATION
+
+### Resource Usage
+- Monitor memory consumption for large datasets
+- Implement pagination for list endpoints
+- Use lazy loading where appropriate
+- Avoid creating unnecessary objects in loops
+- Profile and optimize bottlenecks
+
+### Response Quality
+- Provide clear, actionable error messages
+- Include context in warnings and suggestions
+- Recommend concrete solutions, not just problems
+- Estimate effort for fixing issues (Low/Medium/High)
+- Prioritize issues by severity and impact
+
+## 7. USER EXPERIENCE PRINCIPLES
+
+### Code Review Output
+- Format output clearly with proper Markdown
+- Organize findings by category (Security, Performance, Style, etc.)
+- Include code examples for suggested fixes
+- Provide links to relevant documentation
+- Make findings easy to understand for all skill levels
+
+### Workflow Integration
+- Ensure fast analysis times (ideally < 30 seconds per file)
+- Support incremental review of changed code only
+- Integrate with pre-commit hooks for early feedback
+- Support batch processing of multiple files
+- Provide clear status indicators and progress tracking
+
+## 8. CUSTOM RULES FOR THIS PROJECT
+
+### AI Model Integration
+- Use local LLM for privacy and performance
+- Implement proper error handling for model timeouts
+- Support multiple model configurations
+- Cache model responses when appropriate
+- Implement streaming for large responses
+
+### Database & Storage
+- Use SQLite for local persistence
+- Implement proper schema versioning
+- Provide data export capabilities
+- Ensure data integrity with transactions
+- Clean up old data periodically
+
+### GUI & User Interface
+- Implement responsive and intuitive GUI
+- Use clear visual indicators for issue severity
+- Provide filtering and sorting capabilities
+- Support batch operations on multiple issues
+- Include undo/redo functionality for user actions
+
+## 9. CODE REVIEW CRITERIA
+
+### Critical Issues (Must Fix)
+- Security vulnerabilities (injection, auth bypass, etc.)
+- Unhandled exceptions that crash the program
+- Data corruption or loss scenarios
+- Race conditions in concurrent code
+- Missing input validation
+
+### Important Issues (Should Fix)
+- Performance bottlenecks that impact users
+- Missing type hints and documentation
+- Non-compliant code style (PEP 8)
+- Inefficient algorithms or data structures
+- Poor error messages
+
+### Minor Issues (Nice to Have)
+- Code organization and structure improvements
+- Redundant or unused variables/imports
+- Simplified logic or cleaner patterns
+- Additional test coverage
+- Performance micro-optimizations
+
+## 10. EFFORT ESTIMATION GUIDE
+
+### Low Effort (1-2 hours)
+- Adding type hints
+- Fixing style issues
+- Adding docstrings
+- Simple variable renames
+- Removing unused imports
+
+### Medium Effort (2-8 hours)
+- Refactoring functions into smaller modules
+- Adding error handling
+- Optimizing algorithms
+- Implementing unit tests
+- Database schema adjustments
+
+### High Effort (8+ hours)
+- Major architecture changes
+- Significant performance optimization
+- Security overhaul
+- Integration of new systems
+- Data migration tasks

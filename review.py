@@ -119,6 +119,11 @@ def main():
     
     args = parser.parse_args()
     
+    # Convert "." or "./" to --directory if passed as a file argument
+    if args.files and len(args.files) == 1 and args.files[0] in ('.', './'):
+        args.directory = args.files[0]
+        args.files = []
+    
     custom_rules = ""
     if args.rules:
         with args.rules as f:
@@ -161,9 +166,14 @@ def main():
                 full_text = ""
                 for chunk in get_ollama_review(code_to_review, custom_rules):
                     full_text += chunk
-                # Print directly to stdout to avoid Rich encoding issues
-                sys.stdout.write(full_text)
-                sys.stdout.flush()
+                # Print directly to stdout with error handling for encoding issues
+                try:
+                    sys.stdout.write(full_text)
+                    sys.stdout.flush()
+                except UnicodeEncodeError:
+                    # Fallback: encode with replacement characters
+                    sys.stdout.buffer.write(full_text.encode('utf-8', errors='replace'))
+                    sys.stdout.flush()
             else:
                 # Normal mode: Live streaming display
                 with Live("", console=console, refresh_per_second=8) as live:
@@ -203,9 +213,14 @@ def main():
                             full_text = ""
                             for chunk in get_ollama_review(code_to_review, custom_rules):
                                 full_text += chunk
-                            # Print directly to stdout to avoid Rich encoding issues
-                            sys.stdout.write(full_text)
-                            sys.stdout.flush()
+                            # Print directly to stdout with error handling
+                            try:
+                                sys.stdout.write(full_text)
+                                sys.stdout.flush()
+                            except UnicodeEncodeError:
+                                # Fallback: encode with replacement characters
+                                sys.stdout.buffer.write(full_text.encode('utf-8', errors='replace'))
+                                sys.stdout.flush()
                         else:
                             # Normal mode: Live streaming display
                             with Live("", console=console, refresh_per_second=8) as live:
@@ -239,9 +254,14 @@ def main():
                 full_text = ""
                 for chunk in get_ollama_review(code_to_review, custom_rules):
                     full_text += chunk
-                # Print directly to stdout to avoid Rich encoding issues
-                sys.stdout.write(full_text)
-                sys.stdout.flush()
+                # Print directly to stdout with error handling
+                try:
+                    sys.stdout.write(full_text)
+                    sys.stdout.flush()
+                except UnicodeEncodeError:
+                    # Fallback: encode with replacement characters
+                    sys.stdout.buffer.write(full_text.encode('utf-8', errors='replace'))
+                    sys.stdout.flush()
             else:
                 # Normal mode: Live streaming display
                 with Live("", console=console, refresh_per_second=8) as live:

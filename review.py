@@ -55,7 +55,7 @@ Begin analysis on the following code snippet:
 """
 
     data = {
-        "model": "gemma:2b",
+        "model": "qwen2:0.5b",
         "prompt": prompt,
         "stream": True
     }
@@ -80,7 +80,7 @@ Begin analysis on the following code snippet:
             yield "[yellow]💡 Troubleshooting tips:[/yellow]\n"
             yield "1. Is Ollama running? Try: `ollama serve` in another terminal\n"
             yield "2. Is the model available? Try: `ollama list`\n"
-            yield "3. If not, pull it: `ollama pull gemma:2b`\n"
+            yield "3. If not, pull it: `ollama pull qwen2:0.5b`\n"
 
     except requests.exceptions.Timeout:
         yield "\n[bold red]❌ Error: Ollama request timed out (180s).[/bold red]\n"

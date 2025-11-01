@@ -33,7 +33,7 @@ Each review analyzes code across four key areas:
 - **Python** 3.8 or higher
 - **Ollama** ([install here](https://ollama.ai/)) - Local AI runtime
 - **Git** (for pre-commit integration)
-- **Model**: Pull a model with `ollama pull gemma:2b` (or another supported model)
+- **Model**: Pull a model with `ollama pull qwen2:0.5b` (or another supported model)
 
 ## 📦 Installation
 
@@ -271,7 +271,7 @@ ollama serve
 **Solution**: Pull the required model:
 ```bash
 ollama list                    # See available models
-ollama pull gemma:2b          # Install a model
+ollama pull qwen2:0.5b        # Install a model
 ```
 
 ### Issue: "Ollama request timed out"
